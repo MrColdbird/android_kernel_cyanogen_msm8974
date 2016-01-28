@@ -155,11 +155,14 @@ static ssize_t fpc1020_store_attr_setup(struct device *dev, struct device_attrib
                 fpc1020->irq_status = 1;
             }
         } else if (fpc_attr->offset == offsetof(fpc1020_setup_t, key)) {
-            if (val == KEY_HOME)
-                val = KEY_NAVI_LONG; //Convert to long press keyValue
-            dev_info(&fpc1020->spi->dev, "---Report--- %d\n", (int)val);
-            fpc1020->report_key = (int)val;
-            queue_work(fpc1020->fpc1020_wq, &fpc1020->input_report_work);
+            if (val == KEY_HOME) {
+                //Swallow capacitive hold event to prevent physical hold from breaking
+                dev_info(&fpc1020->spi->dev, "---Swallow--- %d\n", (int)val);
+            } else {
+                dev_info(&fpc1020->spi->dev, "---Report--- %d\n", (int)val);
+                fpc1020->report_key = (int)val;
+                queue_work(fpc1020->fpc1020_wq, &fpc1020->input_report_work);
+            }
         } else if (fpc_attr->offset == offsetof(fpc1020_setup_t, wakeup)) {
             dev_info(&fpc1020->spi->dev, "Modify wakeup status(%d)\n", (int)val);
             if (val != fpc1020->wakeup_status) {
